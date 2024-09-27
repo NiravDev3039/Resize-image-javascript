@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Resizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'CustomFont'; /* Name your font */
+      src: url('./Bubble\ Love\ Demo.otf') format('woff2'), /* Specify the path and format of your font files */
+           url('fonts/yourfont.woff') format('woff');
+      /* Add more src lines for additional file formats if needed */
+      font-weight: normal; /* Specify font weight */
+      font-style: normal; /* Specify font style */
+    }
+    
+    h1 {
+      font-family: 'CustomFont', sans-serif;
+      font-size: 60px;
+      letter-spacing: 2px;
+    }
+    
+    body {
+      background: url(./background1.jpg);
+      background-repeat: no-repeat;
+      background-size: cover;
+      backdrop-filter: invert(126);
+    }
+    
+    .container {
+      max-width: 600px;
+      padding: 20px;
+      background-color: #ffd2cd;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      filter: drop-shadow(2px 4px 6px black);
+    }
+    
+    .upload-label {
+      background-color: #009688;
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+      border-radius: 5px;
+    }
+    
+    .upload-label:hover {
+      background-color: #3b82f6;
+    }
+    
+    .resize-button {
+      background-color: #607D8B;
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+    }
+    
+    .resize-button:hover {
+      background-color: #059669;
+    }
+    
+    .download-link {
+      background-color: #34d399;
+      color: #fff;
+      border: 2px solid #059669;
+      transition: all 0.3s ease-in-out;
+    }
+    
+    .download-link:hover {
+      background-color: #059669;
+    }
+    
+    .reset-button {
+      background-color: #F44336;
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+    }
+    
+    .reset-button:hover {
+      background-color: #ef4444;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: #e5e7eb;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background-color: #34d399;
+      transition: width 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="container bg-white rounded-lg shadow-lg p-6 text-center">
+    <h1 class="text-2xl font-bold mb-4">Image Resizer</h1>
+    <div class="flex flex-col items-center">
+      <label class="block mb-2">Upload Image:</label>
+      <label for="uploadImage" class="flex items-center justify-center cursor-pointer px-4 py-2 upload-label">
+        <i class="fas fa-cloud-upload-alt mr-2"></i>
+        <span>Select Image</span>
+      </label>
+      <input type="file" id="uploadImage" accept="image/*" class="hidden">
+      <div id="dropZone" class="border-2 border-dashed border-gray-500 rounded-lg p-4 mt-4">Or drag and drop an image here</div>
+    </div>
+    <div class="flex space-x-4 mb-4 mt-4">
+        <div class="w-1/2">
+          <label class="block mb-2">Width:</label>
+          <div class="flex items-center">
+            <input type="number" id="widthInput" class="w-1/2 px-4 py-2 border rounded-lg mr-2" min="10" max="1000" required>
+            <select id="widthUnit" class="w-1/2 px-4 py-2 border rounded-lg">
+              <option value="pixel">Pixels</option>
+              <option value="percentage">Percentage</option>
+            </select>
+          </div>
+          <p class="text-sm text-gray-500">Min: 10, Max: 1000</p>
+          <p id="widthError" class="text-xs text-red-500 hidden">Please enter width value.</p>
+        </div>
+        <div class="w-1/2">
+          <label class="block mb-2">Height:</label>
+          <div class="flex items-center">
+            <input type="number" id="heightInput" class="w-1/2 px-4 py-2 border rounded-lg mr-2" min="10" max="1000" required>
+            <select id="heightUnit" class="w-1/2 px-4 py-2 border rounded-lg">
+              <option value="pixel">Pixels</option>
+              <option value="percentage">Percentage</option>
+            </select>
+          </div>
+          <p class="text-sm text-gray-500">Min: 10, Max: 1000</p>
+          <p id="heightError" class="text-xs text-red-500 hidden">Please enter height value.</p>
+        </div>
+      </div>
+    <div class="flex items-center mb-4">
+      <input type="checkbox" id="aspectRatio" class="mr-2">
+      <label for="aspectRatio">Maintain Aspect Ratio</label>
+    </div>
+    <div class="flex space-x-4 mb-4">
+      <div class="w-1/2">
+        <label class="block mb-2">Format:</label>
+        <select id="format" class="w-full px-4 py-2 border rounded-lg">
+          <option value="jpeg">JPEG</option>
+          <option value="png">PNG</option>
+        </select>
+      </div>
+      <div class="w-1/2">
+        <label class="block mb-2">Quality:</label>
+        <input type="range" id="quality" min="0" max="100" value="100" class="w-full">
+        <p class="text-sm text-gray-500" id="qualityLabel">Quality: 100%</p>
+      </div>
+    </div>
+    <div class="flex justify-center mb-4">
+      <button id="resizeButton" class="resize-button hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Resize Image
+      </button>
+      <button id="resetButton" class="reset-button hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">
+        Reset
+      </button>
+    </div>
+    <div class="flex flex-col items-center mb-4" id="previewArea" style="display: none;">
+      <h2 class="text-xl font-bold mb-2"> Image Preview</h2>
+      <img id="previewImage" class="max-w-full h-auto rounded-lg shadow-lg" width="200" height="200">
+    </div>
+    <div class="flex justify-center mb-4" id="downloadArea" style="display: none;">
+      <a id="downloadLink" download="resized_image.jpg" class="download-link hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+        Download 
+      </a>
+    </div>
+    <div class="flex items-center mb-4" id="progressBarArea" style="display: none;">
+      <div class="w-full bg-gray-200 rounded-full">
+        <div id="progressBar" class="progress-bar-fill bg-green-500 text-xs leading-none py-1 rounded-full" style="width: 0;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadImage = document.getElementById('uploadImage');
+    const dropZone = document.getElementById('dropZone');
+    const widthInput = document.getElementById('widthInput');
+    const widthUnit = document.getElementById('widthUnit');
+    const heightInput = document.getElementById('heightInput');
+    const heightUnit = document.getElementById('heightUnit');
+    const aspectRatio = document.getElementById('aspectRatio');
+    const format = document.getElementById('format');
+    const quality = document.getElementById('quality');
+    const qualityLabel = document.getElementById('qualityLabel');
+    const resizeButton = document.getElementById('resizeButton');
+    const resetButton = document.getElementById('resetButton');
+    const previewArea = document.getElementById('previewArea');
+    const previewImage = document.getElementById('previewImage');
+    const downloadArea = document.getElementById('downloadArea');
+    const downloadLink = document.getElementById('downloadLink');
+    const progressBarArea = document.getElementById('progressBarArea');
+    const progressBar = document.getElementById('progressBar');
+
+    quality.addEventListener('input', () => {
+      qualityLabel.textContent = `Quality: ${quality.value}%`;
+    });
+
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.classList.add('border-blue-500');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('border-blue-500');
+      const file = event.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    uploadImage.addEventListener('change', () => {
+      const file = uploadImage.files[0];
+      handleFile(file);
+    });
+
+    resetButton.addEventListener('click', () => {
+      uploadImage.value = '';
+      dropZone.textContent = 'Or drag and drop an image here';
+      previewArea.style.display = 'none';
+      downloadArea.style.display = 'none';
+      progressBarArea.style.display = 'none';
+      resetForm();
+    });
+
+    resizeButton.addEventListener('click', () => {
+
+  // Proceed with resizing the image
+  if (!previewImage.src || previewImage.src === '') {
+    alert('Please upload an image before resizing.');
+    return; // Exit the function if no image is selected
+  }
+  // Check if width or height input is empty
+  if (!widthInput.value.trim()) {
+      document.getElementById('widthError').classList.remove('hidden');
+    } else {
+      document.getElementById('widthError').classList.add('hidden');
+    }
+    if (!heightInput.value.trim()) {
+      document.getElementById('heightError').classList.remove('hidden');
+    } else {
+      document.getElementById('heightError').classList.add('hidden');
+    }
+
+    // Proceed with resizing if inputs are valid
+    if (widthInput.value.trim() && heightInput.value.trim()) {
+      const width = parseInt(widthInput.value);
+      const height = parseInt(heightInput.value);
+      const widthUnitValue = widthUnit.value;
+      const heightUnitValue = heightUnit.value;
+      const maintainAspectRatio = aspectRatio.checked;
+      const outputFormat = format.value;
+      const outputQuality = parseInt(quality.value);
+      
+      // Call resizeImage function with validated inputs
+      resizeImage(width, height, maintainAspectRatio, outputFormat, outputQuality);
+    }
+  
+});
+
+
+
+  // Check if neither width nor height unit is selected
+ 
+
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          previewImage.src = img.src;
+          previewArea.style.display = 'flex';
+          downloadArea.style.display = 'none';
+          progressBarArea.style.display = 'none';
+          resetForm();
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resizeImage(width, height, maintainAspectRatio, outputFormat, outputQuality) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = function() {
+        let newWidth = width;
+        let newHeight = height;
+
+        if (maintainAspectRatio) {
+          const scaleFactor = Math.min(width / img.width, height / img.height);
+          newWidth = Math.floor(img.width * scaleFactor);
+          newHeight = Math.floor(img.height * scaleFactor);
+        }
+
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5; // Simulate progress increment
+          progressBar.style.width = `${progress}%`;
+          if (progress >= 100) {
+            clearInterval(interval);
+            canvas.toBlob((blob) => {
+              const url = URL.createObjectURL(blob);
+              previewImage.src = url;
+              downloadLink.href = url;
+              downloadLink.download = `resized_image.${outputFormat}`;
+              downloadArea.style.display = 'block';
+              progressBarArea.style.display = 'none';
+            }, `image/${outputFormat}`, outputQuality / 100);
+          }
+        }, 100);
+
+        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+      };
+      img.src = previewImage.src;
+
+      progressBarArea.style.display = 'block';
+      progressBar.style.width = '0%';
+    }
+
+    function resetForm() {
+      widthInput.value = '';
+      heightInput.value = '';
+      widthUnit.selectedIndex = 0;
+      heightUnit.selectedIndex = 0;
+      aspectRatio.checked = false;
+      format.selectedIndex = 0;
+      quality.value = '100';
+      qualityLabel.textContent = 'Quality: 100%';
+    }
+  </script>
+</body>
+</html>
